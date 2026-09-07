@@ -1,0 +1,16 @@
+# Production dependencies for NanoStack 3D Web Dashboard & Pipeline
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.9.0
+python-multipart>=0.0.9
+numpy>=2.0.0
+pandas>=2.2.0
+scipy>=1.14.0
+scikit-learn>=1.5.0
+xgboost>=2.1.0
+lightgbm>=4.5.0
+joblib>=1.4.0
+onnxruntime>=1.19.0
+ase>=3.23.0
+numba>=0.60.0
+tqdm>=4.66.0

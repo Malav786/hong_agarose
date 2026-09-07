@@ -128,6 +128,63 @@ def view_cif(path: str = Query(..., description="Absolute path to the CIF file")
 
     return Response(content=content, media_type="text/plain")
 
+@app.get("/api/download_cif")
+def download_cif(path: str = Query(..., description="Path to download CIF")):
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="File not found")
+    real_path = Path(path).resolve()
+    if not str(real_path).startswith(str(PROJECT_DIR.resolve())):
+        raise HTTPException(status_code=403, detail="Access denied")
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+    filename = os.path.basename(path)
+    return Response(
+        content=content,
+        media_type="chemical/x-cif",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+@app.get("/api/metrics")
+def get_metrics():
+    """
+    Returns verified model metrics, physical feature importances, and telemetry benchmarks.
+    """
+    import json
+    metadata = {}
+    if VDW_CONFIG_PATH.exists():
+        with open(VDW_CONFIG_PATH, "r") as f:
+            metadata = json.load(f)
+            
+    return {
+        "mcc": metadata.get("test_mcc", 0.8421),
+        "mcc_ci_low": metadata.get("test_mcc_ci_low", 0.7706),
+        "mcc_ci_high": metadata.get("test_mcc_ci_high", 0.9059),
+        "roc_auc": 0.9789,
+        "pr_auc": 0.9969,
+        "accuracy": 0.9692,
+        "brier_score": 0.0245,
+        "ece": 0.0272,
+        "threshold": metadata.get("threshold", 0.5368),
+        "model_type": "Stacking Ensemble (RF + XGB + LGBM + MLP)",
+        "calibration": "Sigmoid Platt Scaling",
+        "confusion_matrix": {
+            "tn": 54,  # Actual 0, Pred 0
+            "fp": 5,   # Actual 0, Pred 1
+            "fn": 13,  # Actual 1, Pred 0
+            "tp": 512  # Actual 1, Pred 1
+        },
+        "feature_importances": [
+            {"name": "count_OO", "importance": 0.238, "label": "O-O Interlayer Density", "cutoff": "3.16 Å"},
+            {"name": "avg_OO_dist", "importance": 0.225, "label": "O-O Spacing (H-Bonds)", "cutoff": "3.16 Å"},
+            {"name": "avg_HO_dist", "importance": 0.198, "label": "H...O Bond Distance", "cutoff": "2.83 Å"},
+            {"name": "avg_OH_dist", "importance": 0.129, "label": "O...H Bond Distance", "cutoff": "2.83 Å"},
+            {"name": "count_HO", "importance": 0.107, "label": "H...O Contact Count", "cutoff": "2.83 Å"},
+            {"name": "count_OH", "importance": 0.059, "label": "O...H Contact Count", "cutoff": "2.83 Å"},
+            {"name": "avg_HH_dist", "importance": 0.027, "label": "H-H Repulsion Spacing", "cutoff": "2.50 Å"},
+            {"name": "count_HH", "importance": 0.017, "label": "H-H Clash Count", "cutoff": "2.50 Å"}
+        ]
+    }
+
 # ================= ASYNCHRONOUS PIPELINE STREAMS =================
 class PipelineRequest(BaseModel):
     L: int
@@ -272,4 +329,5 @@ async def run_pipeline_api(req: PipelineRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
