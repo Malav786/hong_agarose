@@ -71,10 +71,10 @@ def get_status():
     # 3) Gather stable cifs recursively across any L-layer stable folders (negative_3_cifs, negative_4_cifs, etc.)
     stable_cifs = []
     
-    # Scan project root for folders matching negative_*_cifs
-    for item in os.listdir(PROJECT_DIR):
+    # Scan project root for folders matching negative_*_cifs (including L=2 parents)
+    for item in sorted(os.listdir(PROJECT_DIR)):
         item_path = PROJECT_DIR / item
-        if item_path.is_dir() and item.startswith("negative_") and item != "negative_2_cifs":
+        if item_path.is_dir() and item.startswith("negative_") and item.endswith("_cifs"):
             # Extract layer L from negative_L_cifs
             m = re.match(r"negative_(\d+)_cifs", item)
             if m:
@@ -85,11 +85,12 @@ def get_status():
                     for file in files:
                         if file.lower().endswith(".cif"):
                             file_path = os.path.join(root, file)
-                            
-                            # Parse metadata from filename and directory
-                            # path like: negative_3_cifs/lower/r20/t1.2/t1.2_80_grid15.cif
                             norm_path = file_path.replace("\\", "/")
-                            kind = "lower" if "/lower/" in norm_path else "upper"
+                            
+                            if L == 2:
+                                kind = "parent"
+                            else:
+                                kind = "lower" if "/lower/" in norm_path else "upper"
                             
                             rot_match = re.search(r'/r(\d+)/', norm_path)
                             rot_val = int(rot_match.group(1)) if rot_match else 0
@@ -97,8 +98,8 @@ def get_status():
                             disp_match = re.search(r'/t([0-9.]+)/', norm_path)
                             disp_val = float(disp_match.group(1)) if disp_match else 0.0
                             
-                            # Parse rotation angle from filename
-                            angle_match = re.search(r'_(\d+)_grid', file)
+                            # Parse rotation angle from filename (e.g. t1.2_80_grid15.cif or t1.2_260.cif)
+                            angle_match = re.search(r'_(\d+)(?:_grid|\.cif)', file)
                             angle_val = int(angle_match.group(1)) if angle_match else 0
                             
                             stable_cifs.append({

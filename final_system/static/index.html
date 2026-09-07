@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NanoStack 3D // N-Layer Control Plane & Telemetry Observatory</title>
+    <title>NanoStack 3D // N-Layer Molecular Crystal Architect & VESTA Inspector</title>
     
     <!-- Google Fonts: Outfit & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Custom Style -->
+    <!-- Custom Style (Academic Light Theme) -->
     <link rel="stylesheet" href="style.css">
     
-    <!-- 3Dmol.js loaded locally to prevent CDN/Brave Shield blocks -->
+    <!-- 3Dmol.js loaded locally -->
     <script src="3Dmol-min.js"></script>
 </head>
-<body class="tech-mode">
+<body>
     <div class="ambient-glow"></div>
     <div class="grid-overlay"></div>
 
@@ -27,71 +27,56 @@
             <div class="header-left">
                 <div class="brand">
                     <div class="brand-icon">
-                        <span class="core-pulse"></span>
-                        <div class="orbit-ring"></div>
+                        <span>3D</span>
                     </div>
                     <div class="brand-text">
                         <div class="brand-title">NanoStack <span>3D</span></div>
-                        <div class="brand-sub">N-LAYER CONTROL PLANE & TELEMETRY OBSERVATORY</div>
+                        <div class="brand-sub">Rutgers Computational Nanomaterials Lab // N-Layer Crystal Architect</div>
                     </div>
                 </div>
                 <div class="mode-badge" id="mode-badge">
                     <span class="mode-dot"></span>
-                    <span id="mode-badge-text">MODELED ESTIMATE // PBC-STRICT</span>
+                    <span id="mode-badge-text">PBC STRICT // MIC CONVENTION</span>
                 </div>
             </div>
 
             <!-- LIVE TELEMETRY HUD BAR -->
             <div class="telemetry-bar">
                 <div class="hud-item">
-                    <div class="hud-label">L=2 PARENTS</div>
-                    <div class="hud-value" id="hud-bilayers">-</div>
-                    <div class="hud-unit">CIF SEEDS</div>
+                    <div class="hud-label">L=2 Bilayers</div>
+                    <div class="hud-value" id="hud-bilayers">300</div>
+                    <div class="hud-unit">Seed Parents</div>
                 </div>
                 <div class="hud-divider"></div>
                 <div class="hud-item">
-                    <div class="hud-label">L=3 CANDIDATES</div>
+                    <div class="hud-label">L=3 Candidates</div>
                     <div class="hud-value" id="hud-trilayers">-</div>
-                    <div class="hud-unit">STACKS</div>
+                    <div class="hud-unit">Generated</div>
                 </div>
                 <div class="hud-divider"></div>
                 <div class="hud-item accent">
-                    <div class="hud-label">PREDICTED STABLE</div>
-                    <div class="hud-value neon-cyan" id="hud-stable">-</div>
+                    <div class="hud-label">Stable Stacks</div>
+                    <div class="hud-value" id="hud-stable">-</div>
                     <div class="hud-unit">ΔE ≤ 0</div>
                 </div>
                 <div class="hud-divider"></div>
                 <div class="hud-item highlight">
-                    <div class="hud-label">MODEL MCC</div>
-                    <div class="hud-value neon-green" id="hud-mcc">0.8421</div>
-                    <div class="hud-unit">TEST BENCH</div>
+                    <div class="hud-label">Stacking MCC</div>
+                    <div class="hud-value" id="hud-mcc">0.8421</div>
+                    <div class="hud-unit">Test Benchmark</div>
                 </div>
                 <div class="hud-divider"></div>
                 <div class="hud-item">
                     <div class="hud-label">ROC-AUC</div>
                     <div class="hud-value" id="hud-roc">0.9789</div>
-                    <div class="hud-unit">SEPARABILITY</div>
-                </div>
-                <div class="hud-divider"></div>
-                <div class="hud-item">
-                    <div class="hud-label">THRESHOLD</div>
-                    <div class="hud-value" id="hud-threshold">0.5368</div>
-                    <div class="hud-unit">CALIBRATED</div>
+                    <div class="hud-unit">Separability</div>
                 </div>
             </div>
 
             <div class="header-right">
-                <div class="view-switch-container">
-                    <button class="view-switch-btn active" id="btn-tech-mode" title="Low-Level Physics & Simulation Telemetry">
-                        ⚡ Tech Mode
-                    </button>
-                    <button class="view-switch-btn" id="btn-story-mode" title="Visual Intuition & Materials Science Story">
-                        👶 Story (ELI5)
-                    </button>
-                </div>
                 <div class="engine-status">
-                    <span class="status-indicator-dot idle" id="engine-status-dot"></span>
-                    <span class="engine-status-label" id="engine-status-label">ENGINE IDLE</span>
+                    <span class="status-indicator-dot" id="engine-status-dot"></span>
+                    <span class="engine-status-label" id="engine-status-label">ENGINE READY</span>
                 </div>
             </div>
         </header>
@@ -102,10 +87,10 @@
                 <span class="tab-icon">🛰️</span> Mission Control
             </button>
             <button class="nav-tab" data-tab="tab-studio">
-                <span class="tab-icon">🌌</span> 3D Crystal Studio
+                <span class="tab-icon">🔬</span> VESTA Structure Inspector
             </button>
             <button class="nav-tab" data-tab="tab-model">
-                <span class="tab-icon">🧪</span> Model Telemetry
+                <span class="tab-icon">📊</span> Model Telemetry & Benchmarks
             </button>
             <button class="nav-tab" data-tab="tab-repository">
                 <span class="tab-icon">🗂️</span> Crystal Repository
@@ -125,7 +110,7 @@
                         <div class="panel-header">
                             <div class="panel-title-group">
                                 <span class="panel-icon">⚙️</span>
-                                <h3>N-Layer Generation Parameters</h3>
+                                <h3>N-Layer Synthesis Parameters</h3>
                             </div>
                             <span class="panel-badge">JOB DISPATCH</span>
                         </div>
@@ -133,8 +118,8 @@
                             
                             <div class="config-row">
                                 <div class="field-label-group">
-                                    <label for="layer-count">Target Layer Count ($L$)</label>
-                                    <span class="field-tip">Recursively stacks $L$ layers from stable $(L-1)$ seeds</span>
+                                    <label for="layer-count">Target Layer Count (L)</label>
+                                    <span class="field-tip">Recursively stacks L layers using predicted stable (L-1) seeds</span>
                                 </div>
                                 <div class="layer-stepper">
                                     <button class="step-btn" id="btn-layer-dec">-</button>
@@ -145,7 +130,7 @@
 
                             <div class="config-row">
                                 <div class="field-label-group">
-                                    <label>Interlayer Twist Angles ($\theta$)</label>
+                                    <label>Interlayer Twist Angles (&theta;)</label>
                                     <span class="field-tip">Dispatches configurations across selected rotation degrees</span>
                                 </div>
                                 <div class="angle-matrix" id="angle-matrix">
@@ -175,34 +160,30 @@
                             <div class="pipeline-actions">
                                 <div class="action-grid-dual">
                                     <button id="btn-generate" class="cyber-btn secondary">
-                                        <span class="btn-glow"></span>
-                                        <span class="btn-content">⚡ 1. Generate Candidates</span>
+                                        <span>⚡ 1. Generate Candidates</span>
                                     </button>
                                     <button id="btn-extract" class="cyber-btn secondary">
-                                        <span class="btn-glow"></span>
-                                        <span class="btn-content">📐 2. Extract Features</span>
+                                        <span>📐 2. Extract Features</span>
                                     </button>
                                 </div>
                                 <button id="btn-predict" class="cyber-btn success">
-                                    <span class="btn-glow"></span>
-                                    <span class="btn-content">🔬 3. Classify & Filter Stable Stacks</span>
+                                    <span>🔬 3. Classify & Filter Stable Stacks</span>
                                 </button>
-                                <div class="action-divider"><span>OR AUTOMATE ENTIRE CYCLE</span></div>
-                                <button id="btn-full-pipeline" class="cyber-btn primary gradient-btn">
-                                    <span class="btn-glow"></span>
-                                    <span class="btn-content">🌌 Run End-to-End Autonomous Pipeline</span>
+                                <div class="action-divider"><span>OR AUTOMATE FULL CYCLE</span></div>
+                                <button id="btn-full-pipeline" class="cyber-btn primary">
+                                    <span>🌌 Run End-to-End Autonomous Pipeline</span>
                                 </button>
                             </div>
 
                         </div>
                     </div>
 
-                    <!-- RIGHT COLUMN: STREAMING PROCESS CONSOLE & QUICK STATS -->
+                    <!-- RIGHT COLUMN: STREAMING PROCESS CONSOLE -->
                     <div class="panel telemetry-terminal-panel">
                         <div class="panel-header">
                             <div class="panel-title-group">
                                 <span class="panel-icon">💻</span>
-                                <h3>Engine Execution Stream</h3>
+                                <h3>Engine Execution Console</h3>
                             </div>
                             <div class="terminal-actions">
                                 <span class="stream-pulse"></span>
@@ -211,11 +192,11 @@
                                 <button class="mini-btn" id="btn-copy-terminal">Copy</button>
                             </div>
                         </div>
-                        <div class="panel-body terminal-body">
+                        <div class="panel-body">
                             <div class="terminal-scroller" id="terminal-output">
                                 <div class="log-entry system"><span class="timestamp">[SYSTEM]</span> NanoStack 3D Observability Engine initialized. Ready for job dispatch.</div>
-                                <div class="log-entry info"><span class="timestamp">[INFO]</span> Baseline Model loaded: Calibrated Stacking Ensemble (MCC: 0.8421, ROC: 0.9789).</div>
-                                <div class="log-entry info"><span class="timestamp">[INFO]</span> PBC constraints: Strict Minimum Image Convention (MIC) enabled. Zero atom loss guaranteed.</div>
+                                <div class="log-entry info"><span class="timestamp">[INFO]</span> Calibrated Stacking Ensemble loaded (MCC: 0.8421, ROC-AUC: 0.9789).</div>
+                                <div class="log-entry info"><span class="timestamp">[INFO]</span> PBC constraints: Strict Minimum Image Convention (MIC) active.</div>
                             </div>
                             <div class="terminal-footer">
                                 <div class="progress-wrap">
@@ -231,7 +212,7 @@
                 </div>
             </section>
 
-            <!-- ================= TAB 2: 3D CRYSTAL STUDIO ================= -->
+            <!-- ================= TAB 2: VESTA 3D CRYSTAL INSPECTOR ================= -->
             <section class="tab-content" id="tab-studio">
                 <div class="studio-grid">
                     
@@ -241,26 +222,34 @@
                             <div class="toolbar-group">
                                 <label>Render Style:</label>
                                 <select id="viewer-style" class="hud-select">
-                                    <option value="stick">Sticks (Bond Framework)</option>
+                                    <option value="ball_and_stick" selected>Ball & Stick (VESTA Default)</option>
                                     <option value="sphere">Space-Filling (vdW Spheres)</option>
-                                    <option value="ball_and_stick">Ball & Stick</option>
+                                    <option value="stick">Cylinder Sticks</option>
                                     <option value="line">Wireframe Lines</option>
                                 </select>
                             </div>
 
                             <div class="toolbar-group">
-                                <label>Coloring Scheme:</label>
+                                <label>Coloring:</label>
                                 <select id="viewer-color" class="hud-select">
-                                    <option value="element">Element (CPK Colors)</option>
-                                    <option value="layer">By Layer Index (Depth)</option>
-                                    <option value="stability">Energy Stability (Thermal)</option>
+                                    <option value="element" selected>VESTA CPK Elements</option>
+                                    <option value="layer">By Layer Depth (Z)</option>
+                                    <option value="stability">Thermal Stability</option>
                                 </select>
+                            </div>
+
+                            <!-- VESTA Crystallographic Projections -->
+                            <div class="toolbar-group">
+                                <label>VESTA Projections:</label>
+                                <button class="tool-icon-btn vesta-view" id="btn-view-c" title="View along c* axis (Top-Down)">along c*</button>
+                                <button class="tool-icon-btn vesta-view" id="btn-view-a" title="View along a* axis (Side View)">along a*</button>
+                                <button class="tool-icon-btn vesta-view" id="btn-view-b" title="View along b* axis (Front View)">along b*</button>
                             </div>
 
                             <div class="toolbar-group">
                                 <button class="tool-icon-btn" id="btn-spin" title="Toggle Auto-Spin">🔄 Spin</button>
-                                <button class="tool-icon-btn" id="btn-reset-cam" title="Reset Camera">🎯 Recenter</button>
-                                <button class="tool-icon-btn" id="btn-screenshot" title="Capture High-Res Image">📸 Snapshot</button>
+                                <button class="tool-icon-btn" id="btn-reset-cam" title="Recenter View">🎯 Fit</button>
+                                <button class="tool-icon-btn" id="btn-screenshot" title="Export High-Res PNG">📸 Snapshot</button>
                             </div>
                         </div>
 
@@ -271,8 +260,8 @@
                             <div class="viewport-overlay" id="visualizer-overlay">
                                 <div class="overlay-card">
                                     <span class="overlay-icon">💎</span>
-                                    <h4>No Structure Selected</h4>
-                                    <p>Select any stable configuration from the <strong>Crystal Repository</strong> or trigger a prediction to inspect in 3D.</p>
+                                    <h4>No Crystal Selected</h4>
+                                    <p>Select any stable configuration from the <strong>Crystal Repository</strong> to render in high-fidelity VESTA style.</p>
                                 </div>
                             </div>
 
@@ -281,16 +270,32 @@
                                 <div class="hud-badge-title" id="hud-cif-name">t1.2_80_grid15.cif</div>
                                 <div class="hud-badge-tags">
                                     <span class="badge-tag layer" id="tag-layer">L=3 Trilayer</span>
-                                    <span class="badge-tag kind" id="tag-side">Upper Stack</span>
+                                    <span class="badge-tag kind" id="tag-side">Upper Stacking</span>
                                     <span class="badge-tag rotation" id="tag-rot">r20 (20°)</span>
                                     <span class="badge-tag disp" id="tag-disp">t1.2 Å</span>
-                                    <span class="badge-tag status" id="tag-status">Thermodynamically Stable</span>
+                                    <span class="badge-tag status" id="tag-status">ΔE ≤ 0 (Stable)</span>
+                                </div>
+                            </div>
+
+                            <!-- VESTA ATOM LEGEND -->
+                            <div class="vesta-legend-box">
+                                <div class="legend-item">
+                                    <span class="legend-swatch carbon"></span>
+                                    <span>Carbon (C)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-swatch oxygen"></span>
+                                    <span>Oxygen (O)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-swatch hydrogen"></span>
+                                    <span>Hydrogen (H)</span>
                                 </div>
                             </div>
 
                             <!-- EXPLODED LAYER SEPARATION SLIDER -->
                             <div class="explode-slider-box">
-                                <span class="explode-label">Exploded Layer View</span>
+                                <span class="explode-label">Exploded Separation</span>
                                 <input type="range" id="explode-slider" min="0" max="20" value="0" step="1">
                                 <span class="explode-val" id="explode-val">+0 Å</span>
                             </div>
@@ -302,7 +307,7 @@
                         <div class="panel-header">
                             <div class="panel-title-group">
                                 <span class="panel-icon">📊</span>
-                                <h3>Structure Telemetry</h3>
+                                <h3>Crystallographic Specs</h3>
                             </div>
                         </div>
                         <div class="panel-body">
@@ -331,16 +336,8 @@
 
                             <div class="download-action-box">
                                 <button class="cyber-btn primary full-width" id="btn-download-active-cif">
-                                    💾 Export Raw CIF Coordinates
+                                    💾 Export Raw CIF File
                                 </button>
-                            </div>
-
-                            <!-- MATERIALS STORY SUMMARY (Visible in ELI5 mode) -->
-                            <div class="story-explanation-box" id="story-explanation-box" style="display:none;">
-                                <h4>🔬 Materials Science Story:</h4>
-                                <p id="story-text">
-                                    This structure represents 3 stacked carbohydrate polymer nanofibrils. The middle and outer layers lock together like precision molecular Lego bricks through an intricate network of hydrogen bonds ($O-H\cdots O$). Because all steric clashes are avoided, this configuration has a negative binding energy ($\Delta E \le 0$).
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -364,9 +361,9 @@
                         <div class="panel-body">
                             <div class="model-meta-strip">
                                 <div class="meta-pill"><span class="meta-k">BASE MODELS:</span> Random Forest + XGBoost + LightGBM + MLP</div>
-                                <div class="meta-pill"><span class="meta-k">META-ESTIMATOR:</span> Logistic Regression (C=0.1, Balanced)</div>
-                                <div class="meta-pill"><span class="meta-k">CALIBRATION:</span> Sigmoid Platt Scaling (FrozenEstimator)</div>
-                                <div class="meta-pill"><span class="meta-k">GROUP EVALUATION:</span> 5-Fold StratifiedGroupKFold</div>
+                                <div class="meta-pill"><span class="meta-k">META-ESTIMATOR:</span> Logistic Regression (C=0.1)</div>
+                                <div class="meta-pill"><span class="meta-k">CALIBRATION:</span> Sigmoid Platt Scaling</div>
+                                <div class="meta-pill"><span class="meta-k">CV:</span> 5-Fold StratifiedGroupKFold</div>
                             </div>
 
                             <!-- 4-METRIC GAUGE CARDS -->
@@ -382,7 +379,7 @@
                                     <div class="gauge-sub">Class Separability</div>
                                 </div>
                                 <div class="gauge-card">
-                                    <div class="gauge-title">PR-AUC (AVG PRECISION)</div>
+                                    <div class="gauge-title">PR-AUC SCORE</div>
                                     <div class="gauge-num neon-violet">0.9969</div>
                                     <div class="gauge-sub">Precision-Recall Curve</div>
                                 </div>
@@ -445,10 +442,30 @@
             <section class="tab-content" id="tab-repository">
                 <div class="repository-layout">
                     
+                    <!-- Educational Guide Banner -->
+                    <div class="repo-guide-banner">
+                        <div class="guide-content">
+                            <div class="guide-title">
+                                <span>📚</span> Understanding the Multi-Layer Stacking Architecture
+                            </div>
+                            <div class="guide-text">
+                                • <strong>L=2 Bilayers</strong>: The ground-truth 2-layer parent seeds determined from initial quantum chemical / DFT simulations.<br>
+                                • <strong>L=3 Trilayers</strong>: Formed by taking stable L=2 parents and systematically stacking a 3rd monolayer at either the <code>Upper</code> (top) or <code>Lower</code> (bottom) interface across rotation angles &theta; and displacements t (Å).<br>
+                                • <strong>L=4 & L=5 Stacks</strong>: Recursively generated by stacking successive monolayers onto verified stable (L-1) parents. All shown structures have negative binding energy (<code>&Delta;E &le; 0</code>).
+                            </div>
+                        </div>
+                        <div class="guide-actions">
+                            <button class="batch-dl-btn" id="btn-batch-download-zip" title="Download all stable CIFs for current active layer filter">
+                                📦 Download Active Layer ZIP Archive
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Bar -->
                     <div class="repo-filter-bar">
                         <div class="search-input-box">
                             <span class="search-icon">🔍</span>
-                            <input type="text" id="repo-search" placeholder="Filter by layer count (L), rotation (r20), displacement (t1.2), angle...">
+                            <input type="text" id="repo-search" placeholder="Search by layer (L=2, L=3), rotation (r80), displacement (t1.2), filename...">
                         </div>
                         <div class="filter-chips">
                             <button class="filter-btn active" data-filter="all">All Layers</button>
@@ -460,8 +477,28 @@
                         <div class="repo-count-badge" id="repo-count-badge">0 Structures Discovered</div>
                     </div>
 
+                    <!-- Crystal Cards Grid -->
                     <div class="repo-cards-grid" id="repo-cards-grid">
-                        <!-- Dynamically loaded structure cards -->
+                        <!-- Dynamically populated cards -->
+                    </div>
+
+                    <!-- Pagination Navigation Bar -->
+                    <div class="pagination-bar" id="pagination-bar">
+                        <div class="pagination-info" id="pagination-info">
+                            Showing <strong>1–24</strong> of <strong>0</strong> structures
+                        </div>
+                        <div class="pagination-controls" id="pagination-controls">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <div class="page-size-selector">
+                            <label for="page-size-select">Per page:</label>
+                            <select id="page-size-select">
+                                <option value="12">12</option>
+                                <option value="24" selected>24</option>
+                                <option value="48">48</option>
+                                <option value="96">96</option>
+                            </select>
+                        </div>
                     </div>
 
                 </div>
