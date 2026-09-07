@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NanoStack 3D - High-Performance N-Layer Architect</title>
+    
+    <!-- Google Fonts: Outfit & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- 3Dmol.js loaded locally to bypass external CDN blocks and Brave Shields -->
+    <script src="3Dmol-min.js"></script>
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="app-container">
+        
+        <!-- SIDEBAR PANEL -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <span class="logo-sphere"></span>
+                </div>
+                <h2>NanoStack <span>3D</span></h2>
+            </div>
+            
+            <div class="control-group">
+                <h3>Pipeline Parameters</h3>
+                
+                <div class="input-field">
+                    <label for="layer-count">Target Layer Count (L)</label>
+                    <input type="number" id="layer-count" value="3" min="3" max="10">
+                    <small>Generates L layers from L-1 stable parents</small>
+                </div>
+                
+                <div class="input-field">
+                    <label>Rotation Angles (Degrees)</label>
+                    <div class="angle-chips">
+                        <label class="chip"><input type="checkbox" value="80" checked> 80°</label>
+                        <label class="chip"><input type="checkbox" value="100" checked> 100°</label>
+                        <label class="chip"><input type="checkbox" value="200" checked> 200°</label>
+                        <label class="chip"><input type="checkbox" value="220" checked> 220°</label>
+                        <label class="chip"><input type="checkbox" value="260" checked> 260°</label>
+                        <label class="chip"><input type="checkbox" value="280" checked> 280°</label>
+                        <label class="chip"><input type="checkbox" value="320" checked> 320°</label>
+                        <label class="chip"><input type="checkbox" value="340" checked> 340°</label>
+                    </div>
+                </div>
+
+                <div class="input-field">
+                    <label for="cores">CPU Workers</label>
+                    <div class="slider-container">
+                        <input type="range" id="cores" min="1" max="16" value="4">
+                        <span id="cores-val">4 Cores</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group action-group">
+                <h3>Pipeline Control</h3>
+                <button id="btn-generate" class="btn btn-primary">
+                    <span class="btn-icon">⚡</span> Generate Candidates
+                </button>
+                <button id="btn-extract" class="btn btn-secondary">
+                    <span class="btn-icon">⚙️</span> Extract Features
+                </button>
+                <button id="btn-predict" class="btn btn-success">
+                    <span class="btn-icon">🔬</span> Run Stability Classifier
+                </button>
+                <div class="divider">or</div>
+                <button id="btn-full-pipeline" class="btn btn-gradient">
+                    <span class="btn-icon">🌌</span> Run A-to-Z Pipeline
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="status-summary">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-bilayers">-</div>
+                        <div class="stat-label">Bilayer Parents (L=2)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-trilayers">-</div>
+                        <div class="stat-label">Trilayer Parents (L=3)</div>
+                    </div>
+                    <div class="stat-card accent">
+                        <div class="stat-value" id="stat-stable">-</div>
+                        <div class="stat-label">Total Stable Stacked CIFs</div>
+                    </div>
+                </div>
+            </header>
+
+            <section class="dashboard-grid">
+                
+                <!-- TERMINAL MONITOR PANEL -->
+                <div class="panel console-panel">
+                    <div class="panel-header">
+                        <h3>Process Monitor & Live Logs</h3>
+                        <div class="console-controls">
+                            <span class="status-dot green" id="status-indicator"></span>
+                            <span id="status-text">Idle</span>
+                            <button id="btn-clear-console" class="btn-text">Clear</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="console-out" id="console-output">
+                            <span class="system-log">[SYSTEM] Welcome to NanoStack 3D System Console. Ready for input parameters...</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="pipeline-progress"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D INTERACTIVE VISUALIZER -->
+                <div class="panel visualizer-panel">
+                    <div class="panel-header">
+                        <h3>Interactive 3D Molecular Viewer</h3>
+                        <div class="viewer-controls">
+                            <select id="viewer-style">
+                                <option value="stick">Stick Representation</option>
+                                <option value="sphere">Space-Filling Spheres</option>
+                                <option value="line">Line Style</option>
+                            </select>
+                            <button id="btn-spin" class="btn-text">Toggle Spin</button>
+                        </div>
+                    </div>
+                    <div class="panel-body 3d-container">
+                        <div id="molecule-viewer" class="mol-container"></div>
+                        <div class="visualizer-overlay" id="visualizer-overlay">
+                            <p>Select a stable configuration from the explorer to inspect in 3D</p>
+                        </div>
+                        <div class="view-details" id="view-details" style="display:none;">
+                            <span class="detail-tag" id="tag-kind">lower</span>
+                            <span class="detail-tag" id="tag-rotation">r20</span>
+                            <span class="detail-tag" id="tag-disp">t1.2</span>
+                            <span class="detail-tag" id="tag-filename">t1.2_80_grid1.cif</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STABLE STRUCTURE EXPLORER -->
+                <div class="panel explorer-panel">
+                    <div class="panel-header">
+                        <h3>Stable Structures Explorer</h3>
+                        <div class="explorer-filters">
+                            <input type="text" id="explorer-search" placeholder="Filter by rXX, tXX, angle...">
+                            <span class="cif-count" id="cif-count">0 Structures</span>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="explorer-grid" id="explorer-grid">
+                            <!-- Dynamically loaded cards -->
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- Main JS Application script -->
+    <script src="app.js"></script>
+</body>
+</html>

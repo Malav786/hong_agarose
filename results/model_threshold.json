@@ -1,0 +1,20 @@
+{
+  "threshold": 0.5367867867867867,
+  "features": [
+    "avg_HH_dist",
+    "avg_OO_dist",
+    "avg_OH_dist",
+    "avg_HO_dist",
+    "count_HH",
+    "count_OO",
+    "count_OH",
+    "count_HO"
+  ],
+  "seed": 42,
+  "model_type": "stacking_ensemble_calibrated",
+  "calibration": "sigmoid_platt_scaling",
+  "test_mcc": 0.8420796438712517,
+  "test_mcc_bootstrap_mean": 0.8415362454101426,
+  "test_mcc_ci_low": 0.7706218081621524,
+  "test_mcc_ci_high": 0.9058656507293269
+}
