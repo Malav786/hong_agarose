@@ -159,6 +159,34 @@ def download_cif(path: str = Query(..., description="Path to download CIF")):
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
+@app.get("/api/download_zip")
+def download_zip(layer: int = Query(..., description="Target layer L (e.g. 2, 3, 4, 5)")):
+    """
+    Bundles all predicted stable CIF files for layer L into a compressed ZIP file.
+    """
+    import io
+    import zipfile
+    target_dir = PROJECT_DIR / f"negative_{layer}_cifs"
+    if not target_dir.exists():
+        raise HTTPException(status_code=404, detail=f"No stable structures found for L={layer}")
+    
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for root, _, files in os.walk(target_dir):
+            for file in files:
+                if file.lower().endswith(".cif"):
+                    full_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(full_path, target_dir)
+                    zf.write(full_path, arcname=rel_path)
+    
+    buf.seek(0)
+    zip_filename = f"nanostack_L{layer}_stable_structures.zip"
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{zip_filename}"'}
+    )
+
 @app.get("/api/metrics")
 def get_metrics():
     """
