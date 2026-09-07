@@ -8,7 +8,9 @@ from pathlib import Path
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import StreamingResponse, Response
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
+import time
 
 # Add current directory to path to import pipeline module
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -16,12 +18,19 @@ from pipeline import run_n_layer_generation, run_n_layer_extraction, run_n_layer
 
 app = FastAPI(title="NanoStack 3D - Generalized N-Layer Architect")
 
+# Enable high-speed GZip compression for all responses > 1KB (CIF files, JSON payloads)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # Resolve project paths relative to project root
 FINAL_SYSTEM_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = FINAL_SYSTEM_DIR.parent
 RESULTS_DIR = PROJECT_DIR / "results"
 VDW_CONFIG_PATH = RESULTS_DIR / "model_threshold.json"
 MODEL_PATH = RESULTS_DIR / "pipeline_model_calibrated.joblib"
+
+# In-memory status cache for sub-millisecond API responses
+_STATUS_CACHE = {"timestamp": 0.0, "data": None}
+STATUS_CACHE_TTL = 5.0  # Cache valid for 5 seconds
 
 # Mount Static UI Files (served from static/ folder)
 app.mount("/static", StaticFiles(directory=str(FINAL_SYSTEM_DIR / "static")), name="static")
@@ -36,8 +45,11 @@ def read_root():
 @app.get("/api/status")
 def get_status():
     """
-    Scans the workspace directory for bilayers, trilayers, and stable structures.
+    Scans the workspace directory for bilayers, trilayers, and stable structures with in-memory caching.
     """
+    now = time.time()
+    if _STATUS_CACHE["data"] is not None and (now - _STATUS_CACHE["timestamp"]) < STATUS_CACHE_TTL:
+        return _STATUS_CACHE["data"]
     # 1) Bilayers Count (L=2 parents)
     bilayers_dir = PROJECT_DIR / "negative_2_cifs"
     bilayers_count = 0
@@ -99,12 +111,15 @@ def get_status():
                                 "angle": angle_val
                             })
 
-    return {
+    result = {
         "bilayers_count": bilayers_count,
         "trilayers_count": trilayers_count,
         "stable_cifs_count": len(stable_cifs),
         "stable_cifs": stable_cifs
     }
+    _STATUS_CACHE["timestamp"] = now
+    _STATUS_CACHE["data"] = result
+    return result
 
 # ================= STREAM RAW CIF ENDPOINT =================
 @app.get("/api/view_cif")
@@ -312,6 +327,7 @@ async def run_pipeline_api(req: PipelineRequest):
             except Exception as ex:
                 sync_logger(f"[ERROR] Pipeline execution crashed: {ex}")
             finally:
+                _STATUS_CACHE["data"] = None
                 loop.call_soon_threadsafe(q.put_nowait, "__SENTINEL_DONE__")
 
         # Start execution in a non-blocking thread pool
