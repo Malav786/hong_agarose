@@ -1,17 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=nanostack3d
-#SBATCH --partition=p_hf267_1
+#SBATCH --partition=main
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
-#SBATCH --time=30-00:00:00
+#SBATCH --time=3-00:00:00
 #SBATCH --output=nanostack_service_%j.log
-#SBATCH --error=nanostack_service_%j.err
 
 echo "=========================================================="
 echo "Starting NanoStack 3D Service on Amarel Node: $(hostname)"
-echo "Partition: p_hf267_1 (Owner Allocation)"
+echo "Partition: main (General Amarel Allocation)"
 echo "Date: $(date)"
 echo "=========================================================="
 
@@ -53,7 +52,7 @@ echo "Starting Global Public Tunnel via Cloudflare..."
 echo "Your live public link will appear below:"
 echo "=========================================================="
 
-./cloudflared tunnel --url http://127.0.0.1:8000
+./cloudflared tunnel --url http://127.0.0.1:8000 2>&1
 
 # Cleanup when job terminates
 kill $SERVER_PID
