@@ -7,20 +7,20 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=30-00:00:00
-#SBATCH --output=/projects/f_hf267_1/nanostack_service_%j.log
+#SBATCH --output=nanostack_service_%j.log
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=mjc701@scarletmail.rutgers.edu,mchamp.2509@gmail.com
-
 
 echo "=========================================================="
 echo "Starting NanoStack 3D Service on Amarel Node: $(hostname)"
 echo "Partition: p_hf267_1 (Prof. Hong Dedicated Allocation)"
-echo "Storage:   /projects/f_hf267_1"
 echo "Date: $(date)"
 echo "=========================================================="
 
-PROJECT_DIR="/projects/f_hf267_1/hong_agarose"
-LOG_FILE="/projects/f_hf267_1/nanostack_service_${SLURM_JOB_ID}.log"
+# Auto-detect project directory from where the job was submitted
+PROJECT_DIR="${SLURM_SUBMIT_DIR:-$(pwd)}"
+cd "$PROJECT_DIR" || { echo "[ERROR] Failed to cd to $PROJECT_DIR"; exit 1; }
+LOG_FILE="${PROJECT_DIR}/nanostack_service_${SLURM_JOB_ID}.log"
 
 # 1. Initialize Lmod / Environment Modules on RHEL 9
 if [ -f /etc/profile.d/modules.sh ]; then
@@ -40,7 +40,7 @@ module load anaconda    2>/dev/null
 echo "Active Python: $(which python3)"
 python3 --version
 
-# 3. Move into project directory on shared storage
+# 3. Ensure we are in project directory
 cd "$PROJECT_DIR" || { echo "[ERROR] Project directory not found: $PROJECT_DIR"; exit 1; }
 
 # 4. Clean up broken virtualenv (e.g. wrong Python version)
