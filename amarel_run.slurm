@@ -1,8 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=nanostack3d
-#SBATCH --partition=p_hf267_1
+#SBATCH --partition=main
 #SBATCH --nodes=1
-#SBATCH --nodelist=halk0113
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
@@ -13,7 +12,7 @@
 
 echo "=========================================================="
 echo "Starting NanoStack 3D Service on Amarel Node: $(hostname)"
-echo "Partition: p_hf267_1 (Prof. Hong Dedicated Allocation)"
+echo "Partition: main"
 echo "Date: $(date)"
 echo "=========================================================="
 
