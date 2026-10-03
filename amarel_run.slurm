@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
-#SBATCH --time=30-00:00:00
+#SBATCH --time=3-00:00:00
 #SBATCH --output=nanostack_service_%j.log
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=mjc701@scarletmail.rutgers.edu,mchamp.2509@gmail.com
