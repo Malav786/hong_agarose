@@ -36,6 +36,7 @@ MODEL_PATH = ONNX_MODEL_PATH if ONNX_MODEL_PATH.exists() else JOBLIB_MODEL_PATH
 
 # Application security and demo configuration
 READ_ONLY_MODE = os.environ.get("NANOSTACK_READ_ONLY", "true").lower() in ("true", "1", "yes")
+ALLOW_DEMO_RUNS = os.environ.get("NANOSTACK_ALLOW_DEMO_RUNS", "false").lower() in ("true", "1", "yes")
 ADMIN_API_KEY = os.environ.get("NANOSTACK_ADMIN_KEY", "")
 _PIPELINE_LOCK = asyncio.Lock()
 
@@ -323,12 +324,15 @@ async def run_pipeline_api(
     Protected by demonstration mode read-only guard and administrative authentication.
     """
     # 1. Access Control: Read-Only Demo Guard & Admin Authentication (Fail-Closed)
-    if READ_ONLY_MODE:
+    if ALLOW_DEMO_RUNS:
+        # Public demonstration execution explicitly enabled by server administrator
+        pass
+    elif READ_ONLY_MODE:
         if not ADMIN_API_KEY or not x_admin_key or not secrets.compare_digest(x_admin_key, ADMIN_API_KEY):
             raise HTTPException(
                 status_code=403,
                 detail="Pipeline execution is disabled in public demonstration mode (NANOSTACK_READ_ONLY=true). "
-                       "Supply a valid 'X-Admin-Key' header configured on the server to execute generation jobs."
+                       "To allow execution on your web deployment, set NANOSTACK_ALLOW_DEMO_RUNS=true or provide a valid 'X-Admin-Key'."
             )
     else:
         if not ADMIN_API_KEY:
@@ -356,6 +360,10 @@ async def run_pipeline_api(
         if not (0 <= ang <= 360):
             raise HTTPException(status_code=400, detail=f"Angle {ang} out of valid range [0, 360].")
 
+    # Safe resource limits for cloud container environments
+    safe_cores = max(1, min(req.cores, os.cpu_count() or 2, 4))
+    safe_angles = req.angles[:4] if (ALLOW_DEMO_RUNS and len(req.angles) > 4) else req.angles
+
     async def log_streamer():
         q = asyncio.Queue()
 
@@ -375,6 +383,10 @@ async def run_pipeline_api(
         # Worker method executed inside a separate background execution thread
         def worker():
             try:
+                # Ensure output directories exist
+                results_layer_dir.mkdir(parents=True, exist_ok=True)
+                dest_dir.mkdir(parents=True, exist_ok=True)
+
                 # 1) Resolve the highest available stable folder K_max
                 k_max = 2
                 while os.path.exists(PROJECT_DIR / f"negative_{k_max+1}_cifs"):
@@ -386,6 +398,8 @@ async def run_pipeline_api(
                     k_results = RESULTS_DIR / f"{k}_layer"
                     k_csv = RESULTS_DIR / f"{k}_layer_features.csv"
                     k_dest = PROJECT_DIR / f"negative_{k}_cifs"
+                    k_results.mkdir(parents=True, exist_ok=True)
+                    k_dest.mkdir(parents=True, exist_ok=True)
 
                     sync_logger(f"[SYSTEM] Parent stable folder negative_{k-1}_cifs is missing.")
                     sync_logger(f"[SYSTEM] Automatically running complete intermediate pipeline for L={k} first...")
@@ -396,8 +410,8 @@ async def run_pipeline_api(
                         L=k,
                         base_in=str(k_parent),
                         out_root=str(k_results),
-                        chosen_angles=np.array(req.angles),
-                        cores=req.cores,
+                        chosen_angles=np.array(safe_angles),
+                        cores=safe_cores,
                         logger=sync_logger
                     )
 
@@ -407,7 +421,7 @@ async def run_pipeline_api(
                         L=k,
                         base_dir=str(k_results),
                         out_csv=str(k_csv),
-                        cores=req.cores,
+                        cores=safe_cores,
                         logger=sync_logger
                     )
 
@@ -429,6 +443,8 @@ async def run_pipeline_api(
                 results_layer_dir_target = RESULTS_DIR / f"{req.L}_layer"
                 csv_path_target = RESULTS_DIR / f"{req.L}_layer_features.csv"
                 dest_dir_target = PROJECT_DIR / f"negative_{req.L}_cifs"
+                results_layer_dir_target.mkdir(parents=True, exist_ok=True)
+                dest_dir_target.mkdir(parents=True, exist_ok=True)
 
                 if req.mode in ("generate", "all"):
                     sync_logger(f"[SYSTEM] Starting target L={req.L} structure generation...")
@@ -439,8 +455,8 @@ async def run_pipeline_api(
                         L=req.L,
                         base_in=str(parent_dir_target),
                         out_root=str(results_layer_dir_target),
-                        chosen_angles=np.array(req.angles),
-                        cores=req.cores,
+                        chosen_angles=np.array(safe_angles),
+                        cores=safe_cores,
                         logger=sync_logger
                     )
                     sync_logger(f"[SYSTEM] Finished generating candidates for target L={req.L}")
@@ -451,7 +467,7 @@ async def run_pipeline_api(
                         L=req.L,
                         base_dir=str(results_layer_dir_target),
                         out_csv=str(csv_path_target),
-                        cores=req.cores,
+                        cores=safe_cores,
                         logger=sync_logger
                     )
 
