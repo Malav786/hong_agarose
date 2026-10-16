@@ -1,0 +1,33 @@
+NanoStack 3D: N-Layer Nanomaterial Architect & Stability Predictor
+Copyright (c) 2026 [AUTHOR'S FULL LEGAL OR PREFERRED PUBLICATION NAME].
+
+This project incorporates open-source software packages and web libraries.
+We acknowledge the respective maintainers and communities:
+
+1. Atomic Simulation Environment (ASE)
+   License: GNU Lesser General Public License (LGPL v2.1+)
+   Website: https://wiki.fysik.dtu.dk/ase/
+
+2. Scikit-Learn
+   License: BSD 3-Clause License
+   Website: https://scikit-learn.org/
+
+3. XGBoost
+   License: Apache License 2.0
+   Website: https://xgboost.readthedocs.io/
+
+4. LightGBM
+   License: MIT License
+   Website: https://lightgbm.readthedocs.io/
+
+5. ONNX Runtime
+   License: MIT License
+   Website: https://onnxruntime.ai/
+
+6. FastAPI / Starlette / Uvicorn
+   License: MIT License / BSD 3-Clause License
+   Website: https://fastapi.tiangolo.com/
+
+7. 3Dmol.js
+   License: BSD 3-Clause License
+   Website: https://3dmol.csb.pitt.edu/

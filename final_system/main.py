@@ -4,13 +4,15 @@ import os
 import re
 import asyncio
 import sys
+import time
+import secrets
 from pathlib import Path
-from fastapi import FastAPI, Query, HTTPException
-from fastapi.responses import StreamingResponse, Response
+from typing import Optional, List
+from fastapi import FastAPI, Query, HTTPException, Header
+from fastapi.responses import StreamingResponse, Response, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.gzip import GZipMiddleware
-from pydantic import BaseModel
-import time
+from pydantic import BaseModel, Field
 
 # Add current directory to path to import pipeline module
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +28,75 @@ FINAL_SYSTEM_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = FINAL_SYSTEM_DIR.parent
 RESULTS_DIR = PROJECT_DIR / "results"
 VDW_CONFIG_PATH = RESULTS_DIR / "model_threshold.json"
-MODEL_PATH = RESULTS_DIR / "pipeline_model_calibrated.joblib"
+
+# Canonical model selection: Prefer ONNX (exact match to published 300 bilayers) with Joblib fallback
+ONNX_MODEL_PATH = RESULTS_DIR / "pipeline_model_calibrated.onnx"
+JOBLIB_MODEL_PATH = RESULTS_DIR / "pipeline_model_calibrated.joblib"
+MODEL_PATH = ONNX_MODEL_PATH if ONNX_MODEL_PATH.exists() else JOBLIB_MODEL_PATH
+
+# Application security and demo configuration
+READ_ONLY_MODE = os.environ.get("NANOSTACK_READ_ONLY", "true").lower() in ("true", "1", "yes")
+ADMIN_API_KEY = os.environ.get("NANOSTACK_ADMIN_KEY", "")
+_PIPELINE_LOCK = asyncio.Lock()
+
+# Whitelisted root-level subdirectories permitted for CIF file serving
+ALLOWED_CIF_SUBDIRS = ("data", "results", "negative_")
+
+def _validate_safe_cif_path(raw_path: str) -> Path:
+    """
+    Validates that raw_path:
+    1. Points to an existing file with a .cif extension.
+    2. Resolves strictly inside the project root directory.
+    3. Resides within an explicitly approved subdirectory (data/, results/, negative_*_cifs/).
+    4. Does not traverse out or reference sensitive internal files (.git, code, configs).
+    """
+    if not raw_path or not isinstance(raw_path, str):
+        raise HTTPException(status_code=400, detail="Path parameter is required.")
+
+    if "\x00" in raw_path:
+        raise HTTPException(status_code=400, detail="Invalid path characters.")
+
+    try:
+        p = Path(raw_path)
+        if not p.is_absolute():
+            p = (PROJECT_DIR / p).resolve()
+        else:
+            p = p.resolve()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid path format.")
+
+    # Strict .cif extension check
+    if p.suffix.lower() != ".cif":
+        raise HTTPException(status_code=403, detail="Access denied. Only .cif structure files are accessible.")
+
+    # Strict containment check inside project workspace
+    proj_resolved = PROJECT_DIR.resolve()
+    try:
+        if hasattr(p, "is_relative_to"):
+            if not p.is_relative_to(proj_resolved):
+                raise HTTPException(status_code=403, detail="Access denied. Path outside project workspace.")
+        else:
+            p.relative_to(proj_resolved)
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied. Path outside project workspace.")
+
+    # Whitelist directory check
+    rel_parts = p.relative_to(proj_resolved).parts
+    if not rel_parts:
+        raise HTTPException(status_code=403, detail="Access denied.")
+
+    top_dir = rel_parts[0]
+    is_allowed = any(
+        top_dir == allowed or (allowed.endswith("_") and top_dir.startswith(allowed))
+        for allowed in ALLOWED_CIF_SUBDIRS
+    )
+    if not is_allowed:
+        raise HTTPException(status_code=403, detail="Access denied. Directory not permitted for public viewing.")
+
+    if not p.is_file():
+        raise HTTPException(status_code=404, detail="CIF file not found on disk.")
+
+    return p
 
 # In-memory status cache for sub-millisecond API responses
 _STATUS_CACHE = {"timestamp": 0.0, "data": None}
@@ -37,9 +107,21 @@ app.mount("/static", StaticFiles(directory=str(FINAL_SYSTEM_DIR / "static")), na
 
 @app.get("/")
 def read_root():
-    # Redirect root to index.html
-    from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/static/index.html")
+
+@app.get("/api/health")
+def get_health():
+    """
+    System health and readiness check for automated monitors and orchestrators.
+    """
+    return {
+        "status": "healthy",
+        "read_only": READ_ONLY_MODE,
+        "active_job": _PIPELINE_LOCK.locked(),
+        "model_backend": "onnx" if ONNX_MODEL_PATH.exists() else "joblib",
+        "threshold_config_available": VDW_CONFIG_PATH.exists(),
+        "timestamp": time.time()
+    }
 
 # ================= WORKSPACE SYNC & STATS ENDPOINT =================
 @app.get("/api/status")
@@ -124,51 +206,42 @@ def get_status():
 
 # ================= STREAM RAW CIF ENDPOINT =================
 @app.get("/api/view_cif")
-def view_cif(path: str = Query(..., description="Absolute path to the CIF file")):
+def view_cif(path: str = Query(..., description="Path to the CIF file")):
     """
     Streams raw CIF file text to be rendered by 3Dmol.js in the browser.
+    Protected by strict containment and extension checks.
     """
-    if not os.path.exists(path):
-        raise HTTPException(status_code=404, detail="CIF file not found on disk.")
-    
-    # Security check: Ensure the file remains inside the project workspace directory
-    try:
-        real_path = Path(path).resolve()
-        if not str(real_path).startswith(str(PROJECT_DIR.resolve())):
-            raise HTTPException(status_code=403, detail="Access denied. Path outside project workspace.")
-    except Exception:
-        raise HTTPException(status_code=403, detail="Invalid path configuration.")
-
-    with open(path, "r", encoding="utf-8") as f:
+    safe_path = _validate_safe_cif_path(path)
+    with open(safe_path, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
 
     return Response(content=content, media_type="text/plain")
 
 @app.get("/api/download_cif")
 def download_cif(path: str = Query(..., description="Path to download CIF")):
-    if not os.path.exists(path):
-        raise HTTPException(status_code=404, detail="File not found")
-    real_path = Path(path).resolve()
-    if not str(real_path).startswith(str(PROJECT_DIR.resolve())):
-        raise HTTPException(status_code=403, detail="Access denied")
-    with open(path, "r", encoding="utf-8") as f:
+    """
+    Downloads a CIF structure file.
+    Protected by strict containment and extension checks.
+    """
+    safe_path = _validate_safe_cif_path(path)
+    with open(safe_path, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
-    filename = os.path.basename(path)
+
     return Response(
         content=content,
         media_type="chemical/x-cif",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        headers={"Content-Disposition": f'attachment; filename="{safe_path.name}"'}
     )
 
 @app.get("/api/download_zip")
-def download_zip(layer: int = Query(..., description="Target layer L (e.g. 2, 3, 4, 5)")):
+def download_zip(layer: int = Query(..., ge=2, le=20, description="Target layer L (e.g. 2, 3, 4, 5)")):
     """
     Bundles all predicted stable CIF files for layer L into a compressed ZIP file.
     """
     import io
     import zipfile
-    target_dir = PROJECT_DIR / f"negative_{layer}_cifs"
-    if not target_dir.exists():
+    target_dir = (PROJECT_DIR / f"negative_{layer}_cifs").resolve()
+    if not target_dir.is_relative_to(PROJECT_DIR.resolve()) or not target_dir.exists():
         raise HTTPException(status_code=404, detail=f"No stable structures found for L={layer}")
     
     buf = io.BytesIO()
@@ -231,17 +304,58 @@ def get_metrics():
 
 # ================= ASYNCHRONOUS PIPELINE STREAMS =================
 class PipelineRequest(BaseModel):
-    L: int
-    mode: str  # 'generate' | 'extract' | 'predict' | 'all'
-    cores: int
-    angles: list[int]
+    L: int = Field(..., ge=3, le=10, description="Target layer count")
+    mode: str = Field(default="all", description="Execution mode: generate, extract, predict, or all")
+    cores: int = Field(default=4, ge=1, le=32, description="Number of worker threads")
+    angles: List[int] = Field(
+        default_factory=lambda: [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340],
+        description="Sampling rotation angles in degrees"
+    )
 
 @app.post("/api/run_pipeline")
-async def run_pipeline_api(req: PipelineRequest):
+async def run_pipeline_api(
+    req: PipelineRequest,
+    x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key")
+):
     """
     Triggers generation/extraction/prediction steps for arbitrary layer count L.
     Streams logs dynamically to the frontend client console.
+    Protected by demonstration mode read-only guard and administrative authentication.
     """
+    # 1. Access Control: Read-Only Demo Guard & Admin Authentication (Fail-Closed)
+    if READ_ONLY_MODE:
+        if not ADMIN_API_KEY or not x_admin_key or not secrets.compare_digest(x_admin_key, ADMIN_API_KEY):
+            raise HTTPException(
+                status_code=403,
+                detail="Pipeline execution is disabled in public demonstration mode (NANOSTACK_READ_ONLY=true). "
+                       "Supply a valid 'X-Admin-Key' header configured on the server to execute generation jobs."
+            )
+    else:
+        if not ADMIN_API_KEY:
+            raise HTTPException(
+                status_code=500,
+                detail="Administrative key (NANOSTACK_ADMIN_KEY) is not configured on the server. "
+                       "The system fails closed to protect administrative endpoints."
+            )
+        if not x_admin_key or not secrets.compare_digest(x_admin_key, ADMIN_API_KEY):
+            raise HTTPException(status_code=401, detail="Unauthorized. Valid 'X-Admin-Key' header required.")
+
+    # 2. Concurrency Lock: Prevent multiple parallel jobs from exhausting CPU/RAM
+    if _PIPELINE_LOCK.locked():
+        raise HTTPException(
+            status_code=409,
+            detail="A pipeline task is already actively running. Concurrent jobs are disabled to protect server resources."
+        )
+
+    # 3. Mode validation
+    if req.mode not in ("generate", "extract", "predict", "all"):
+        raise HTTPException(status_code=400, detail="Invalid mode. Must be 'generate', 'extract', 'predict', or 'all'.")
+
+    # 4. Angles validation
+    for ang in req.angles:
+        if not (0 <= ang <= 360):
+            raise HTTPException(status_code=400, detail=f"Angle {ang} out of valid range [0, 360].")
+
     async def log_streamer():
         q = asyncio.Queue()
 
@@ -250,6 +364,7 @@ async def run_pipeline_api(req: PipelineRequest):
             loop.call_soon_threadsafe(q.put_nowait, msg + "\n")
 
         loop = asyncio.get_running_loop()
+        await _PIPELINE_LOCK.acquire()
 
         # Target directories resolve
         parent_dir = PROJECT_DIR / f"negative_{req.L-1}_cifs"
@@ -358,17 +473,23 @@ async def run_pipeline_api(req: PipelineRequest):
             finally:
                 _STATUS_CACHE["data"] = None
                 loop.call_soon_threadsafe(q.put_nowait, "__SENTINEL_DONE__")
+                if _PIPELINE_LOCK.locked():
+                    loop.call_soon_threadsafe(_PIPELINE_LOCK.release)
 
         # Start execution in a non-blocking thread pool
         import numpy as np
         asyncio.create_task(asyncio.to_thread(worker))
 
         # Yield stream logs chunk-by-chunk to HTTP Response Stream
-        while True:
-            log_line = await q.get()
-            if log_line == "__SENTINEL_DONE__":
-                break
-            yield log_line
+        try:
+            while True:
+                log_line = await q.get()
+                if log_line == "__SENTINEL_DONE__":
+                    break
+                yield log_line
+        finally:
+            if _PIPELINE_LOCK.locked():
+                _PIPELINE_LOCK.release()
 
     return StreamingResponse(log_streamer(), media_type="text/plain")
 

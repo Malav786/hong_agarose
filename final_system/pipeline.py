@@ -4,6 +4,9 @@ import os
 import re
 import shutil
 import json
+import sys
+import tempfile
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from ase import Atoms
@@ -11,6 +14,23 @@ from ase.io import read, write
 from sklearn.neighbors import NearestNeighbors
 from scipy.spatial import cKDTree as KDTree
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+def atomic_write_cif(atoms: Atoms, target_path: str) -> None:
+    """
+    Safely writes an Atoms object to disk using atomic rename.
+    Guarantees that parallel threads never leave truncated or corrupted CIF files.
+    """
+    target = Path(target_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp_fd, tmp_name = tempfile.mkstemp(suffix=".cif.tmp", dir=str(target.parent))
+    os.close(tmp_fd)
+    try:
+        write(tmp_name, atoms, format="cif")
+        os.replace(tmp_name, str(target))
+    except Exception:
+        if os.path.exists(tmp_name):
+            os.remove(tmp_name)
+        raise
 
 # ================= GRACEFUL NUMBA JIT DECORATOR =================
 try:
@@ -259,15 +279,21 @@ def generate_next_layer(cif_path: str, out_root: str, chosen_angles: np.ndarray,
                 d_min = 0.7 * (VDW_RADII[el1] + VDW_RADII[el2])
             d_min_parent_pairs[pair_key] = d_min
 
-    # Create Threshold Matrix (against the entire parent structure)
+    # Create Threshold Matrices (dynamically resolved for lower and upper layer templates)
     orig_all_elems = df_sorted["Element"].to_numpy()
     orig_all_xyz = df_sorted[["x","y","z"]].to_numpy(float)
-    threshold_matrix = np.zeros((len(orig_all_elems), 78))
-    for i, e_f in enumerate(orig_all_elems):
-        for j in range(78):
-            template_e = bottom_layer["Element"].iloc[j]
-            pair_key = tuple(sorted([e_f, template_e]))
-            threshold_matrix[i, j] = d_min_parent_pairs[pair_key]
+
+    def _build_threshold_matrix(target_layer_df: pd.DataFrame) -> np.ndarray:
+        t_elems = target_layer_df["Element"].to_numpy()
+        mat = np.zeros((len(orig_all_elems), len(t_elems)), dtype=np.float64)
+        for i, e_f in enumerate(orig_all_elems):
+            for j, e_t in enumerate(t_elems):
+                pair_key = tuple(sorted([e_f, e_t]))
+                mat[i, j] = d_min_parent_pairs.get(pair_key, 0.7 * (VDW_RADII.get(e_f, 1.5) + VDW_RADII.get(e_t, 1.5)))
+        return mat
+
+    threshold_matrix_lower = _build_threshold_matrix(bottom_layer)
+    threshold_matrix_upper = _build_threshold_matrix(top_layer)
 
     # Generate Grid search coordinates
     X_CART = 9.35
@@ -336,7 +362,8 @@ def generate_next_layer(cif_path: str, out_root: str, chosen_angles: np.ndarray,
 
             # Clash Check
             frac_opt = optimized_xyz @ inv_cell
-            if check_clash_pbc_jit(frac_orig, frac_opt, cell_arr, pbc, threshold_matrix):
+            thresh_mat = threshold_matrix_lower if kind == "lower" else threshold_matrix_upper
+            if check_clash_pbc_jit(frac_orig, frac_opt, cell_arr, pbc, thresh_mat):
                 continue
 
             merged_elems = np.concatenate([orig_all_elems, new_elems])
@@ -372,7 +399,8 @@ def generate_next_layer(cif_path: str, out_root: str, chosen_angles: np.ndarray,
             out_dir = os.path.join(out_root, kind, f"r{rnum}", f"t{disp_val_str}")
             os.makedirs(out_dir, exist_ok=True)
             out_name = f"t{disp_val_str}_{ang}_grid{grid_idx}.cif"
-            atoms_out.write(os.path.join(out_dir, out_name))
+            out_cif_path = os.path.join(out_dir, out_name)
+            atomic_write_cif(atoms_out, out_cif_path)
 
     # Stacking below bottom layer
     base_lower_angle = -float(rnum)
@@ -544,28 +572,31 @@ def run_n_layer_predictions(L: int, csv_path: str, model_path: str, metadata_pat
 
     df_full = pd.read_csv(csv_path)
 
-    # Load Model and Config
-    with open(metadata_path, "r") as f:
-        config = json.load(f)
-    threshold = float(config["threshold"])
-    feature_names = list(config["features"])
+    # Load Predictor (prefers canonical ONNX, with Joblib fallback)
+    try:
+        from script.core.models import StackingPredictor
+    except ImportError:
+        sys_dir = str(Path(__file__).resolve().parent.parent)
+        if sys_dir not in sys.path:
+            sys.path.insert(0, sys_dir)
+        from script.core.models import StackingPredictor
 
-    import joblib
-    model = joblib.load(model_path)
-    logger(f"Loaded ML pipeline model from: {model_path}")
+    predictor = StackingPredictor(model_path=model_path, config_path=metadata_path)
+    engine_name = "ONNX Runtime" if predictor.use_onnx else "Joblib (Scikit-Learn)"
+    logger(f"Loaded ML pipeline model using {engine_name} engine.")
 
     # Predict stability for each of the L-1 interfaces
     interface_preds = []
     
     for i in range(L - 1):
         prefix = f"Int{i+1}"
-        int_cols = [f"{prefix}_{col}" for col in feature_names]
+        int_cols = [f"{prefix}_{col}" for col in predictor.feature_names]
         
         X_int = df_full[int_cols].copy()
-        X_int.columns = feature_names
+        X_int.columns = predictor.feature_names
         
-        probs = model.predict_proba(X_int)[:, 1]
-        preds = (probs >= threshold).astype(int)
+        probs = predictor.predict_interface_proba(X_int)
+        preds = (probs >= predictor.threshold).astype(int)
         
         interface_preds.append(preds)
         logger(f"Interface {i+1} Class 0 (Stable): {(preds == 0).sum()} | Class 1 (Unstable): {(preds == 1).sum()}")
@@ -579,10 +610,7 @@ def run_n_layer_predictions(L: int, csv_path: str, model_path: str, metadata_pat
     total_stable = stable_mask.sum()
     logger(f"Overall {L}-layer Class 0 (Stable): {total_stable} | Class 1 (Unstable): {len(df_full) - total_stable}")
 
-    # Copy stable structures
-    if os.path.exists(dest_dir):
-        logger(f"Removing existing destination folder: {dest_dir}")
-        shutil.rmtree(dest_dir)
+    # Copy stable structures safely without destructive rmtree
     os.makedirs(dest_dir, exist_ok=True)
 
     copied_count = 0

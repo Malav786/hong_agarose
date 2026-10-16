@@ -1,0 +1,70 @@
+NanoStack 3D Research Attribution and Academic Use License
+Version 1.0 (2026)
+
+Copyright (c) 2026 [AUTHOR'S FULL LEGAL OR PREFERRED PUBLICATION NAME].
+All rights reserved.
+
+Project: NanoStack 3D: N-Layer Nanomaterial Architect & Stability Predictor
+
+================================================================================
+IMPORTANT NOTICE REGARDING OPEN SOURCE STATUS:
+This license is a custom academic research and software distribution license.
+Because Section 2 contains a mandatory scholarly citation requirement for academic
+and published work, this license may not qualify as an "Open Source" license under
+the Open Source Initiative (OSI) Open Source Definition (OSD #6: No Discrimination
+Against Fields of Endeavor). It is provided specifically to ensure academic credit,
+provenance tracking, and research reproducibility while enabling broad public access.
+================================================================================
+
+1. GRANT OF PERMISSION
+Subject to the terms and conditions of this License, the Copyright Holder hereby
+grants to any person or institution obtaining a copy of this software, trained
+model parameters, datasets, and associated documentation files (the "Software"):
+a royalty-free, non-exclusive, non-transferable, worldwide license to use, copy,
+study, run, modify, and redistribute the Software for academic, scientific,
+educational, non-profit, and internal research evaluation purposes.
+
+2. SCHOLARLY ATTRIBUTION AND CITATION REQUIREMENT
+If you use this Software, in whole or in part, or any results, structures, features,
+or models derived from this Software, in any scientific publication, conference
+presentation, thesis, technical report, pre-print, or scholarly work, you MUST
+properly cite the associated research publication and project repository:
+
+    Primary Citation:
+    [PAPER TITLE, DOI, OR OFFICIAL CITATION]
+
+    Repository & Software Citation:
+    [AUTHOR'S FULL LEGAL OR PREFERRED PUBLICATION NAME], "NanoStack 3D: N-Layer
+    Nanomaterial Architect & Stability Predictor", GitHub repository, 2026.
+    (Machine-readable citation metadata is provided in CITATION.cff).
+
+3. REDISTRIBUTION AND DERIVATIVE WORKS
+You may distribute verbatim or modified copies of the Software, provided that:
+a. All copies and substantial portions of the Software retain the original
+   copyright notice above, this list of conditions, and the disclaimer below.
+b. Any modified files or derivative works carry prominent notices stating that you
+   changed the files and indicating the date of modification.
+c. Derivative works or published configurations incorporating the Software must
+   retain the citation requirements set forth in Section 2.
+
+4. COMMERCIAL USE AND SEPARATE LICENSING
+Commercial exploitation, integration into closed proprietary commercial SaaS
+offerings, or licensing for commercial production without attribution requires
+separate written permission from the Copyright Holder. For commercial inquiries
+or custom licensing requests, please contact:
+    [AUTHOR / INSTITUTIONAL CONTACT POINT OR TRANSFER OFFICE]
+
+5. WARRANTY AND DISCLAIMER OF LIABILITY
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+6. TERMINATION
+Any use, reproduction, or distribution of the Software not in compliance with the
+terms and conditions of this License automatically terminates your rights under this
+License. Enforcement depends on applicable copyright law, contract law, and the facts
+of any dispute.

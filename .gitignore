@@ -1,5 +1,6 @@
 # Environments & Virtual Envs
 .venv/
+.venv*/
 env/
 venv/
 ENV/
@@ -48,4 +49,25 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
+
+# Test & Linting Caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# Temporary files & Slurm logs
+*.log
 *.tmp
+audit/
+
+# Citation metadata (local only until publication)
+CITATION.cff
+
+# Environment variables and private credentials
+.env
+.env.local
+.env.*
+!.env.example
+

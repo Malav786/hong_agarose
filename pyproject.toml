@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nanostack3d"
+version = "1.0.0"
+description = "NanoStack 3D: N-Layer Nanomaterial Architect & Stability Predictor"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Custom-Academic-Research"}
+authors = [
+    {name = "[AUTHOR'S FULL LEGAL OR PREFERRED PUBLICATION NAME]"}
+]
+keywords = [
+    "computational-chemistry",
+    "materials-science",
+    "nanomaterials",
+    "machine-learning",
+    "density-functional-theory",
+    "stacking-fault-energy"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "ase>=3.22.0",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scipy>=1.10.0",
+    "scikit-learn>=1.3.0",
+    "onnxruntime>=1.16.0",
+    "joblib>=1.3.0",
+    "numba>=0.58.0",
+]
+
+[project.optional-dependencies]
+web = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "pydantic>=2.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "httpx>=0.24.0",
+    "ruff>=0.1.0",
+]
+ml-extra = [
+    "xgboost>=1.7.0",
+    "lightgbm>=4.0.0",
+]
+all = [
+    "nanostack3d[web,dev,ml-extra]"
+]
+
+[project.scripts]
+nanostack3d = "script.core.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["script.core*"]
+
+[tool.pytest.ini_options]
+testpaths = ["script/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning:pickle",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
