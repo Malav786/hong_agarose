@@ -1,3 +1,14 @@
+---
+title: NanoStack 3D
+emoji: 🔬
+colorFrom: red
+colorTo: blue
+sdk: gradio
+app_file: app.py
+pinned: false
+license: other
+---
+
 # NanoStack 3D: N-Layer Nanomaterial Architect & Stability Predictor
 
 [![CI](https://github.com/Malav786/hong_agarose/actions/workflows/ci.yml/badge.svg)](https://github.com/Malav786/hong_agarose/actions/workflows/ci.yml)
