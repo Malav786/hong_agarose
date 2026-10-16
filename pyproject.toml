@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "Custom-Academic-Research"}
 authors = [
-    {name = "[AUTHOR'S FULL LEGAL OR PREFERRED PUBLICATION NAME]"}
+    {name = "NanoStack 3D Contributors (Author list to be published soon upon official release)"}
 ]
 keywords = [
     "computational-chemistry",

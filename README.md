@@ -313,18 +313,19 @@ If you use NanoStack 3D, its models, or generated multilayer candidate structure
 
 ```bibtex
 @article{nanostack3d2026,
-  title={[PAPER TITLE, DOI, OR OFFICIAL CITATION]},
-  author={[AUTHOR'S FULL LEGAL OR PREFERRED PUBLICATION NAME]},
-  journal={[JOURNAL NAME OR PREPRINT REPOSITORY]},
+  title={Developing Stacking Models for Interacting Biopolymers using Quantum Mechanical calculations and machine-learning},
+  author={[Author list to be made public soon upon publication]},
+  journal={[Journal name / Preprint repository - coming soon]},
   year={2026},
-  doi={[PAPER DOI PLACEHOLDER]}
+  note={Full publication details and author list will be made public upon release}
 }
 
 @software{nanostack3d_code,
   title={NanoStack 3D: N-Layer Nanomaterial Architect & Stability Predictor},
-  author={[AUTHOR'S FULL LEGAL OR PREFERRED PUBLICATION NAME]},
+  author={[Author list to be made public soon upon publication]},
   year={2026},
-  url={https://github.com/Malav786/hong_agarose}
+  url={https://github.com/Malav786/hong_agarose},
+  note={Official author list and citation details will be made public upon release}
 }
 ```
 

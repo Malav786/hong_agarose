@@ -1,7 +1,7 @@
 NanoStack 3D Research Attribution and Academic Use License
 Version 1.0 (2026)
 
-Copyright (c) 2026 [AUTHOR'S FULL LEGAL OR PREFERRED PUBLICATION NAME].
+Copyright (c) 2026 NanoStack 3D Contributors (Fang Laboratory, Rutgers University).
 All rights reserved.
 
 Project: NanoStack 3D: N-Layer Nanomaterial Architect & Stability Predictor
@@ -31,12 +31,11 @@ presentation, thesis, technical report, pre-print, or scholarly work, you MUST
 properly cite the associated research publication and project repository:
 
     Primary Citation:
-    [PAPER TITLE, DOI, OR OFFICIAL CITATION]
+    "Developing Stacking Models for Interacting Biopolymers using Quantum Mechanical calculations and machine-learning" (Publication details coming soon upon release).
 
     Repository & Software Citation:
-    [AUTHOR'S FULL LEGAL OR PREFERRED PUBLICATION NAME], "NanoStack 3D: N-Layer
-    Nanomaterial Architect & Stability Predictor", GitHub repository, 2026.
-    (Machine-readable citation metadata is provided in CITATION.cff).
+    NanoStack 3D: N-Layer Nanomaterial Architect & Stability Predictor, GitHub repository, 2026.
+    (Author list to be published soon upon official release).
 
 3. REDISTRIBUTION AND DERIVATIVE WORKS
 You may distribute verbatim or modified copies of the Software, provided that:

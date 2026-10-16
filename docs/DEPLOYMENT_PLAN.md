@@ -207,9 +207,10 @@ In the WordPress dashboard for Sites@Rutgers, create or edit the page with the f
 <pre>
 @software{nanostack3d_2026,
   title  = {NanoStack 3D: N-Layer Nanomaterial Architect & Stability Predictor},
-  author = {[AUTHOR'S FULL LEGAL OR PREFERRED PUBLICATION NAME]},
+  author = {[Author list to be made public soon upon publication]},
   year   = {2026},
-  url    = {https://github.com/Malav786/hong_agarose}
+  url    = {https://github.com/Malav786/hong_agarose},
+  note   = {Official author list will be updated upon publication}
 }
 </pre>
 </div>
