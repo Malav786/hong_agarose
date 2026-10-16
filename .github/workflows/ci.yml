@@ -29,6 +29,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
 
+      - name: Install System Dependencies (macOS OpenMP)
+        if: runner.os == 'macOS'
+        run: |
+          brew install libomp
+
       - name: Upgrade pip and install build tools
         run: |
           python -m pip install --upgrade pip setuptools wheel

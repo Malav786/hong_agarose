@@ -67,8 +67,8 @@ class TestInferenceParity(unittest.TestCase):
         try:
             import xgboost  # noqa: F401
             import lightgbm  # noqa: F401
-        except ImportError:
-            self.skipTest("Optional dependencies 'xgboost' and/or 'lightgbm' not installed; skipping legacy Joblib unpickling check.")
+        except Exception as ex:
+            self.skipTest(f"Optional ML engine unavailable on this platform ({ex}); skipping legacy Joblib unpickling check.")
 
         predictor_onnx = StackingPredictor(backend="onnx")
         predictor_joblib = StackingPredictor(backend="joblib")
