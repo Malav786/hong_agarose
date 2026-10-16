@@ -35,7 +35,7 @@ jobs:
 
       - name: Install NanoStack 3D Core and Test Dependencies
         run: |
-          python -m pip install -e ".[dev,web]"
+          python -m pip install -e ".[dev,web,ml-extra]"
 
       - name: Verify CLI and Environment
         run: |

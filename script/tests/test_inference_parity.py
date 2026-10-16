@@ -64,6 +64,12 @@ class TestInferenceParity(unittest.TestCase):
         Compare output probabilities between Joblib and ONNX across all 2,916 samples.
         Verify that mean absolute probability difference is < 0.005.
         """
+        try:
+            import xgboost  # noqa: F401
+            import lightgbm  # noqa: F401
+        except ImportError:
+            self.skipTest("Optional dependencies 'xgboost' and/or 'lightgbm' not installed; skipping legacy Joblib unpickling check.")
+
         predictor_onnx = StackingPredictor(backend="onnx")
         predictor_joblib = StackingPredictor(backend="joblib")
 
