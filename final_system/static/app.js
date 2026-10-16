@@ -491,7 +491,20 @@ async function triggerPipeline(mode) {
         });
 
         if (!response.ok) {
-            throw new Error(`Pipeline API returned error: ${response.status}`);
+            let errorMsg = `Pipeline API returned HTTP ${response.status}`;
+            try {
+                const errData = await response.json();
+                if (errData && errData.detail) errorMsg = errData.detail;
+            } catch (_) {}
+
+            logTerminal(`[DENIED] ${errorMsg}`, "error");
+            if (response.status === 403) {
+                logTerminal("[PUBLIC DEMO NOTICE] Heavy multi-layer generation is disabled on the public web demo to protect cloud CPU/RAM resources.", "warn");
+                logTerminal("[HPC WORKFLOW] Full multi-core scientific generation runs on Rutgers Amarel via Slurm (partition p_hf267_1).", "system");
+                logTerminal("[TIP] Use the '3D Molecular Viewer' tab to inspect precomputed bilayer and multilayer structures in real-time WebGL.", "info");
+            }
+            updateProgress(0, "READ-ONLY DEMO");
+            return;
         }
 
         const reader = response.body.getReader();
@@ -528,7 +541,7 @@ async function triggerPipeline(mode) {
         await updateWorkspaceStatus();
 
     } catch (err) {
-        logTerminal(`[ERROR] Execution stream crashed: ${err}`, "error");
+        logTerminal(`[ERROR] Connection or stream interrupted: ${err}`, "error");
         updateProgress(0, "FAILED");
     } finally {
         setEngineRunning(false);
