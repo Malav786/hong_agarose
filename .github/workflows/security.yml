@@ -1,0 +1,56 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  schedule:
+    - cron: "0 0 * * 0"  # Run weekly
+
+permissions:
+  contents: read
+
+jobs:
+  security-audit:
+    name: Security Scan & Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Static Analysis Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit
+
+      - name: Run Bandit AST Security Scan
+        run: |
+          bandit -r script/core final_system -ll -ii || true
+
+      - name: Verify No Committed Secrets or Personal Emails
+        run: |
+          python -c "
+          import re, sys
+          from pathlib import Path
+
+          p_email = re.compile(r'[a-zA-Z0-9_.+-]+@(scarletmail\.rutgers\.edu|gmail\.com)')
+          flagged = []
+          for p in Path('.').rglob('*'):
+              if p.is_file() and not any(part.startswith('.') or part in ('audit', '.venv') for part in p.parts):
+                  try:
+                      txt = p.read_text(encoding='utf-8', errors='ignore')
+                      if p_email.search(txt):
+                          flagged.append(str(p))
+                  except Exception:
+                      pass
+          if flagged:
+              print('FAIL: Exposed personal email found in:', flagged)
+              sys.exit(1)
+          print('PASS: No personal email patterns detected in source files.')
+          "

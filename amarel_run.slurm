@@ -8,7 +8,7 @@
 #SBATCH --time=3-00:00:00
 #SBATCH --output=nanostack_service_%j.log
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --mail-user=mjc701@scarletmail.rutgers.edu,mchamp.2509@gmail.com
+#SBATCH --mail-user=user@institution.edu  # Set your email address or override at submit time
 
 echo "=========================================================="
 echo "Starting NanoStack 3D Service on Amarel Node: $(hostname)"
@@ -64,41 +64,20 @@ fi
 
 echo "[OK] Python env ready: $(which python)"
 
-# 6. Download cloudflared if not already present
-CLOUDFLARED="$PROJECT_DIR/cloudflared"
-if [ ! -f "$CLOUDFLARED" ]; then
-    echo "[SETUP] Downloading cloudflared binary..."
-    wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-         -O "$CLOUDFLARED"
-    chmod +x "$CLOUDFLARED"
-fi
+# 6. Secure Access Note:
+# For private lab access from campus or via Rutgers VPN, use policy-compliant
+# SSH local port forwarding from your workstation:
+#   ssh -N -L 8000:$(hostname):8000 netid@amarel3.hpc.rutgers.edu
+# Then open http://localhost:8000 in your browser.
+#
+# (Note: Ephemeral public tunnels such as cloudflared on institutional HPC
+# compute nodes may trigger network security alerts and are restricted by OARC).
 
 # 7. Launch FastAPI server
 echo "[START] Launching NanoStack 3D Uvicorn server on port 8000..."
-python -m uvicorn final_system.main:app --host 127.0.0.1 --port 8000 &
-SERVER_PID=$!
-echo "[INFO]  Server PID: $SERVER_PID"
+echo "[INFO]  Compute Node: $(hostname)"
+echo "[INFO]  Secure SSH Tunnel command for lab members:"
+echo "        ssh -N -L 8000:$(hostname):8000 <netid>@amarel3.hpc.rutgers.edu"
+python -m uvicorn final_system.main:app --host 127.0.0.1 --port 8000
 
-# Wait for server to bind
-sleep 8
-
-# Verify server is actually running before starting tunnel
-if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-    echo "[ERROR] Uvicorn failed to start. Check logs above."
-    exit 1
-fi
-echo "[OK] Server is running."
-
-# 8. Start Cloudflare Quick Tunnel
-echo "=========================================================="
-echo "  Starting Cloudflare Tunnel..."
-echo "  The public URL will appear on the next line:"
-echo "=========================================================="
-
-"$CLOUDFLARED" tunnel --url http://127.0.0.1:8000 2>&1 | tee -a "$LOG_FILE"
-
-# 9. Cleanup on exit
-echo "[STOP] Tunnel ended. Shutting down server (PID $SERVER_PID)..."
-kill "$SERVER_PID" 2>/dev/null
-wait "$SERVER_PID" 2>/dev/null
-echo "[DONE] $(date)"
+echo "[DONE] Server shut down at $(date)"

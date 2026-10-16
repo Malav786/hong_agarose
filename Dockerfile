@@ -28,4 +28,7 @@ COPY --chown=user:user . .
 # Expose port (Hugging Face default: 7860)
 EXPOSE 7860
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-7860}/api/health || exit 1
+
 CMD ["sh", "-c", "uvicorn final_system.main:app --host 0.0.0.0 --port ${PORT:-7860}"]

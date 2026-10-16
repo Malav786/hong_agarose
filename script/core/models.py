@@ -38,7 +38,8 @@ class StackingPredictor:
     def __init__(
         self,
         model_path: Optional[str] = None,
-        config_path: Optional[str] = None
+        config_path: Optional[str] = None,
+        backend: str = "auto"
     ):
         project_root = Path(__file__).resolve().parent.parent.parent
         results_dir = project_root / "results"
@@ -46,6 +47,7 @@ class StackingPredictor:
         self.model_path = Path(model_path) if model_path else (results_dir / "pipeline_model_calibrated.joblib")
         self.config_path = Path(config_path) if config_path else (results_dir / "model_threshold.json")
         self.onnx_path = results_dir / "pipeline_model_calibrated.onnx"
+        self.backend = backend.lower()
 
         self._load_config()
         self._load_model()
@@ -62,20 +64,38 @@ class StackingPredictor:
         self.model = None
         self.use_onnx = False
 
+        # 1. Preferred Canonical Engine: ONNX (matches published 300 negative_2_cifs)
+        if self.backend in ("auto", "onnx") and self.onnx_path.exists():
+            try:
+                import onnxruntime as ort
+                # Suppress onnxruntime verbose logs and run on CPU safely across platforms
+                opts = ort.SessionOptions()
+                opts.log_severity_level = 3
+                self.ort_session = ort.InferenceSession(
+                    str(self.onnx_path),
+                    sess_options=opts,
+                    providers=["CPUExecutionProvider"]
+                )
+                self.input_name = self.ort_session.get_inputs()[0].name
+                self.use_onnx = True
+                return
+            except Exception as ex:
+                if self.backend == "onnx":
+                    raise RuntimeError(f"ONNX backend explicitly requested but failed to load: {ex}")
+                print(f"[WARN] ONNX load failed ({ex}). Attempting Joblib fallback...")
+
+        # 2. Secondary Engine: Joblib / Scikit-learn
         if self.model_path.exists():
             try:
                 self.model = joblib.load(self.model_path)
+                self.use_onnx = False
                 return
             except Exception as ex:
-                print(f"[WARN] Joblib load failed ({ex}). Attempting ONNX fallback...")
+                raise RuntimeError(f"Failed to load Joblib model from {self.model_path}: {ex}")
 
-        if self.onnx_path.exists():
-            import onnxruntime as ort
-            self.ort_session = ort.InferenceSession(str(self.onnx_path), providers=["CPUExecutionProvider"])
-            self.input_name = self.ort_session.get_inputs()[0].name
-            self.use_onnx = True
-        else:
-            raise FileNotFoundError("Both Joblib and ONNX model files are missing.")
+        raise FileNotFoundError(
+            f"Both ONNX ({self.onnx_path}) and Joblib ({self.model_path}) models are missing or unreadable."
+        )
 
     def predict_interface_proba(self, X: pd.DataFrame) -> np.ndarray:
         """
