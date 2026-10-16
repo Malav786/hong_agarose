@@ -28,14 +28,12 @@ echo "=========================================================="
 
 # 1. Base Paths & Project Storage
 PROJECT_STORAGE="/projects/f_hf267_1"
-PROJECT_DIR="${PROJECT_STORAGE}/nanostack3d"
+PROJECT_DIR="${PROJECT_STORAGE}/code/hong_agarose"
 LOG_DIR="${PROJECT_STORAGE}/logs"
 mkdir -p "${LOG_DIR}"
 
 if [ ! -d "${PROJECT_DIR}" ]; then
-    echo "[ERROR] Project directory not found at ${PROJECT_DIR}"
-    echo "Clone repository to ${PROJECT_DIR} before submitting."
-    exit 1
+    PROJECT_DIR="$(pwd)"
 fi
 
 cd "${PROJECT_DIR}" || exit 1
@@ -47,29 +45,19 @@ if [ -f "${PROJECT_DIR}/.env" ]; then
     set +a
 fi
 
-# 2. Environment Modules (RHEL 9 on Clark / Bayonne Nodes)
-if [ -f /etc/profile.d/modules.sh ]; then
-    source /etc/profile.d/modules.sh
-elif [ -f /usr/share/lmod/lmod/init/bash ]; then
-    source /usr/share/lmod/lmod/init/bash
+# 2. Virtual Environment Activation
+VENV_PATH="${PROJECT_STORAGE}/envs/nanostack_venv"
+if [ -f "${VENV_PATH}/bin/activate" ]; then
+    source "${VENV_PATH}/bin/activate"
+elif [ -f "${PROJECT_DIR}/.venv/bin/activate" ]; then
+    source "${PROJECT_DIR}/.venv/bin/activate"
+else
+    echo "[ERROR] Virtual environment not found at ${VENV_PATH}"
+    exit 1
 fi
-
-module purge 2>/dev/null
-module load python/3.11 2>/dev/null || module load python/3.12 2>/dev/null || module load python/3.10 2>/dev/null
 
 echo "Active Python: $(which python3)"
 python3 --version
-
-# 3. Virtual Environment Activation
-if [ ! -d ".venv" ]; then
-    echo "[SETUP] Initializing standard .venv on RHEL 9..."
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install --upgrade pip
-    pip install -e ".[dev,web,ml-extra]"
-else
-    source .venv/bin/activate
-fi
 
 # 4. CPU Threading Controls (Prevent Thread Contention / Oversubscription)
 export OMP_NUM_THREADS=1
